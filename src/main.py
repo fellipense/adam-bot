@@ -5,18 +5,13 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-
 _token = os.getenv('TOKEN')
 
-class MyClient(discord.Client):
-    async def on_ready(self):
-        print(f'Logged on as {self.user}!')
+bot = discord.Bot()
 
-    async def on_message(self, message):
-        print(f'Message from {message.author}: {message.content}')
+@bot.command(description="Sends the bot's latency.")
+async def ping(ctx): 
+    await ctx.respond(f"Pong! Latency is {bot.latency}")
 
-intents = discord.Intents.default()
-intents.message_content = True
 
-client = MyClient(intents=intents)
-client.run(_token)
+bot.run(_token)
