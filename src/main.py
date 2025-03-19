@@ -23,43 +23,56 @@ async def on_ready():
 async def ping(ctx): 
     await ctx.respond(f"Pong! Latency is `{bot.latency:.3f}`s")
 
-@bot.command(description="Ativates turbo LM mode")
-async def turbo(ctx): 
-    turbo = not turbo;
+@bot.command(description="Toggle turbo LM mode")
+async def turbo(ctx):     
 
-    if turbo:
-        await ctx.respond(f"Turbo mode enabled.")
+    global turbo
+    if turbo == True:
+        turbo = False
+        print("TURBO OFF")
+        await ctx.respond(f"Turbo mode disabled.")
     else:
-        await ctx.respond(f"Turbo mode desabled.")
+        turbo = True
+        print("TURBO ON")
+        await ctx.respond(f"Turbo mode enabled.")
 
 @bot.event
 async def on_message(msg):
     if msg.author.bot: return
+    if msg.content.startswith('/'): return
+
+
+    if "adam" not in msg.content.lower(): return
+    
+    global turbo
 
     print("-------------------------------------------------------------")
     print(f"Analizando mensagem de '{msg.author.name}': '{msg.content}'")
     print()
 
-    if turbo: 
-        print("TURBO")
-        prompt = "Context: [{context}] Message: [{msg.content}]"
+    if turbo == True: 
         version = "7b"
         context = os.getenv('LM_INSTRUCTIONS')
-        context = context.replace("<date>", datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (Y-m-d H:M:S)")
-        context = context.replace("<name>", msg.author.name)
-        context = context.replace("<where>", f"'{msg.channel.guild.name}' in '{msg.channel.name}'")
 
-        members = []
-        for member in msg.channel.members:
-            members.append("'"+member.name+"'")
-
-        context = context.replace("<users>", ", ".join(members))
-
-        print(context)
+        print(f"TURBO ON ({version})")
     else:
-        if "adam" not in msg.content.lower(): return
-        prompt = msg.content
+        context = os.getenv('LM_INSTRUCTIONS')
+        context = context.replace("<name>", msg.author.name)
         version = "1.5b"
+        print(f"TURBO OFF ({version})")
+
+    context = context.replace("<date>", datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (Y-m-d H:M:S)")
+    context = context.replace("<name>", msg.author.name)
+    context = context.replace("<where>", f"'{msg.channel.guild.name}' in '{msg.channel.name}'")
+
+    members = []
+    for member in msg.channel.members:
+        members.append("'"+member.name+"'")
+
+    context = context.replace("<users>", ", ".join(members))
+
+    print(context)
+    prompt = f"{msg.content} ({context})"
 
     print("-------------------------------------------------------------")
 
@@ -68,11 +81,12 @@ async def on_message(msg):
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.7,
+            "temperature": 0.1,
             "max_tokens": -1
         }
     }
 
+    msg.channel.typing()
     response = requests.post(_ollama_url, json=payload)
 
     if response.status_code == 200:
