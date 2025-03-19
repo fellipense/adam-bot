@@ -67,7 +67,7 @@ async def on_message(msg):
     prompt = f"{msg.content} ({context})"
 
     print(f"{msg.author.name}: '{msg.content}'")
-    print(f"TURBO: {"ON" if turbo == True else "OFF"}")
+    print(f"TURBO: {'ON' if turbo == True else 'OFF'}")
     print("Instructions/context: " + context)
     print("-------------------------------------------------------------")
 
