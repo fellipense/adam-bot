@@ -41,6 +41,7 @@ async def on_message(msg):
     print()
 
     if turbo: 
+        print("TURBO")
         prompt = "Context: [{context}] Message: [{msg.content}]"
         version = "7b"
         context = os.getenv('LM_INSTRUCTIONS')
