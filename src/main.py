@@ -39,28 +39,24 @@ async def turbo(ctx):
 @bot.event
 async def on_message(msg):
     if msg.author.bot: return
-    if msg.content.startswith('/'): return
-
-
-    if "adam" not in msg.content.lower(): return
+    if not msg.content.lower().startswith("adam, "): return
     
     global turbo
 
-    print("-------------------------------------------------------------")
-    print(f"Analizando mensagem de '{msg.author.name}': '{msg.content}'")
+    print("MESSAGE------------------------------------------------------")
+    print(f"'{msg.author.name}': '{msg.content}'")
     print()
 
     if turbo == True: 
         version = "7b"
         context = os.getenv('LM_INSTRUCTIONS')
 
-        print(f"TURBO ON ({version})")
     else:
-        context = os.getenv('LM_INSTRUCTIONS')
-        context = context.replace("<name>", msg.author.name)
         version = "1.5b"
-        print(f"TURBO OFF ({version})")
+        context = os.getenv('LOW_LM_INSTRUCTIONS')
 
+
+    print(f"TURBO: {turbo}")
     context = context.replace("<date>", datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (Y-m-d H:M:S)")
     context = context.replace("<name>", msg.author.name)
     context = context.replace("<where>", f"'{msg.channel.guild.name}' in '{msg.channel.name}'")
@@ -71,7 +67,7 @@ async def on_message(msg):
 
     context = context.replace("<users>", ", ".join(members))
 
-    print(context)
+    print("Instructions/context: " + context)
     prompt = f"{msg.content} ({context})"
 
     print("-------------------------------------------------------------")
@@ -91,7 +87,7 @@ async def on_message(msg):
 
     if response.status_code == 200:
         rawRes = json.loads(response.text)['response']
-        print("-------------------------------------------------------------")
+        print("RESPONSE-----------------------------------------------------")
         print(rawRes)
         print("-------------------------------------------------------------")
         res = rawRes.split("</think>\n\n")[1]
