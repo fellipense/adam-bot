@@ -44,8 +44,6 @@ async def on_message(msg):
     global turbo
 
     print("MESSAGE------------------------------------------------------")
-    print(f"'{msg.author.name}': '{msg.content}'")
-    print()
 
     if turbo == True: 
         version = "7b"
@@ -56,7 +54,6 @@ async def on_message(msg):
         context = os.getenv('LOW_LM_INSTRUCTIONS')
 
 
-    print(f"TURBO: {turbo}")
     context = context.replace("<date>", datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (Y-m-d H:M:S)")
     context = context.replace("<name>", msg.author.name)
     context = context.replace("<where>", f"'{msg.channel.guild.name}' in '{msg.channel.name}'")
@@ -67,9 +64,11 @@ async def on_message(msg):
 
     context = context.replace("<users>", ", ".join(members))
 
-    print("Instructions/context: " + context)
     prompt = f"{msg.content} ({context})"
 
+    print(f"{msg.author.name}: '{msg.content}'")
+    print(f"TURBO: {turbo}")
+    print("Instructions/context: " + context)
     print("-------------------------------------------------------------")
 
     payload = {
