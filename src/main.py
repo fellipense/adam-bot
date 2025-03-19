@@ -67,7 +67,7 @@ async def on_message(msg):
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.1,
+            "temperature": 0.7,
             "max_tokens": -1
         }
     }
