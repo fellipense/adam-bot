@@ -13,6 +13,7 @@ _token = os.getenv('TOKEN')
 intents = discord.Intents.all()
 
 bot = discord.Bot(command_prefix=".", intents=intents)
+turbo = False
 
 @bot.event
 async def on_ready():
@@ -22,6 +23,15 @@ async def on_ready():
 async def ping(ctx): 
     await ctx.respond(f"Pong! Latency is `{bot.latency:.3f}`s")
 
+@bot.command(description="Ativates turbo LM mode")
+async def turbo(ctx): 
+    turbo = not turbo;
+
+    if turbo:
+        await ctx.respond(f"Turbo mode enabled.")
+    else:
+        await ctx.respond(f"Turbo mode desabled.")
+
 @bot.event
 async def on_message(msg):
     if msg.author.bot: return
@@ -30,34 +40,40 @@ async def on_message(msg):
     print(f"Analizando mensagem de '{msg.author.name}': '{msg.content}'")
     print()
 
-    context = os.getenv('LM_INSTRUCTIONS')
-    context = context.replace("<date>", datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (Y-m-d H:M:S)")
-    context = context.replace("<name>", msg.author.name)
-    context = context.replace("<where>", f"'{msg.channel.guild.name}' in '{msg.channel.name}'")
+    if turbo: 
+        prompt = "Context: [{context}] Message: [{msg.content}]"
+        version = "7b"
+        context = os.getenv('LM_INSTRUCTIONS')
+        context = context.replace("<date>", datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (Y-m-d H:M:S)")
+        context = context.replace("<name>", msg.author.name)
+        context = context.replace("<where>", f"'{msg.channel.guild.name}' in '{msg.channel.name}'")
 
-    members = []
-    for member in msg.channel.members:
-        members.append("'"+member.name+"'")
+        members = []
+        for member in msg.channel.members:
+            members.append("'"+member.name+"'")
 
-    context = context.replace("<users>", ", ".join(members))
+        context = context.replace("<users>", ", ".join(members))
 
-    print(context)
+        print(context)
+    else:
+        if "adam" not in msg.content.lower(): return
+        prompt = msg.content
+        version = "1.5b"
+
     print("-------------------------------------------------------------")
 
     payload = {
-        "model": "deepseek-r1:7b",  # Nome do modelo que você baixou
-        "prompt": f"Context: [{context}] Message: [{msg.content}]",
+        "model": "deepseek-r1:" + version,
+        "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.1,  # Controla a criatividade do modelo
-            "max_tokens": -1  # Número máximo de tokens (-1 significa sem limite)
+            "temperature": 0.1,
+            "max_tokens": -1
         }
     }
 
-    # Fazendo a requisição POST
     response = requests.post(_ollama_url, json=payload)
 
-    # Verificando se a requisição foi bem-sucedida
     if response.status_code == 200:
         rawRes = json.loads(response.text)['response']
         print("-------------------------------------------------------------")
@@ -69,10 +85,8 @@ async def on_message(msg):
 
         await msg.reply(res) 
 
-            
-
     else:
         print(f"Erro na requisição: {response.status_code}")
-        print(response.text)  # Exibe a mensagem de erro, se houver
+        print(response.text)
 
 bot.run(_token)
